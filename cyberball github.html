@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cyberball Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* One fixed look on purpose: every participant sees the same stimulus,
+   whatever their device or theme setting. */
+:root{
+  color-scheme: light;
+  --bg:#E4EBEE; --bg2:#D3DEE3; --panel:#F8FAFB; --ink:#1D2B35; --muted:#5B6C78;
+  --line:#C8D3D9; --accent:#2F7F73; --accent-soft:#D6EAE6; --accent-ink:#FFFFFF;
+  --ball:#EDB93B; --warn:#A8502C; --warn-soft:#F5E1D8;
+  --font:'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;padding-inline:16px;color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;
+  background-color:var(--bg);
+  background-image:radial-gradient(120% 80% at 50% 0%, var(--panel) 0%, var(--bg) 55%, var(--bg2) 100%);
+  background-attachment:fixed}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 48px;display:flex;flex-direction:column;gap:18px;box-sizing:border-box}
+section[data-screen]{display:flex;flex-direction:column;gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px clamp(18px,4vw,36px);
+  box-shadow:0 1px 2px rgba(29,43,53,.05),0 14px 34px -20px rgba(29,43,53,.28)}
+h1{font-weight:800;font-size:clamp(23px,3.6vw,29px);line-height:1.2;margin:0 0 14px;text-wrap:balance;letter-spacing:-.01em}
+h2{font-weight:800;font-size:19px;margin:0 0 10px}
+p{margin:0 0 12px;max-width:64ch}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.note{background:var(--accent-soft);border-radius:12px;padding:12px 16px;font-size:15px;max-width:64ch;margin:6px 0 20px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{appearance:none;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:800 16px/1 var(--font);
+  padding:14px 26px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn:hover{filter:brightness(1.08)}
+.btn:focus-visible,.field:focus-visible,select:focus-visible{outline:3px solid var(--ball);outline-offset:3px}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);padding:10px 18px;font-size:14px}
+.btn[disabled]{opacity:.5;cursor:default}
+
+/* lobby */
+.slots{list-style:none;margin:8px 0 18px;padding:0;display:flex;flex-direction:column;gap:10px;max-width:460px}
+.slot{display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.dot{width:34px;height:34px;border-radius:50%;flex:none;background:var(--line);transition:background .3s}
+.slot .who{font-weight:800;flex:1}
+.slot .state{font-size:14px;color:var(--muted);font-weight:600}
+.slot.on .state{color:var(--accent)}
+.slot:not(.on) .who{color:var(--muted);font-weight:600}
+.dots::after{content:"";display:inline-block;width:1.4em;text-align:left;animation:dots 1.2s steps(4) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+
+/* game */
+.stage{position:relative;border:1px solid var(--line);border-radius:22px;overflow:hidden;
+  background:linear-gradient(180deg,#EFF4F6 0%,#E5ECEF 60%,#DCE5E9 100%);
+  box-shadow:inset 0 1px 0 #fff,0 14px 34px -22px rgba(29,43,53,.35)}
+.stage svg{display:block;width:100%;height:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.status{max-width:none;text-align:center;font-weight:800;color:var(--accent);min-height:1.6em;margin:0}
+.player .ring{opacity:0;transition:opacity .18s}
+.player.target{cursor:pointer}
+.player.target .ring{opacity:.5}
+.player.target:hover .ring,.player.target:focus-visible .ring{opacity:1}
+.player:focus{outline:none}
+.bob{animation:bob 3.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-2.5px)}}
+.over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(248,250,251,.72);backdrop-filter:blur(2px)}
+.over span{font-weight:800;font-size:clamp(20px,3.4vw,26px);background:var(--panel);border:1px solid var(--line);padding:14px 28px;border-radius:999px}
+
+/* end */
+.codebox{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:6px 0 18px}
+.code{font-family:var(--mono);font-weight:500;font-size:clamp(26px,6vw,36px);letter-spacing:.14em;
+  background:#fff;border:1.5px dashed var(--accent);border-radius:12px;padding:10px 18px;user-select:all;-webkit-user-select:all}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:12px 16px;font-weight:600;max-width:64ch;margin:0 0 16px}
+
+/* researcher tools */
+.pilot{border:1.5px dashed var(--line);border-radius:14px;padding:12px 16px;font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.pilot b{color:var(--ink);letter-spacing:.06em;text-transform:uppercase;font-size:12px}
+.pilot label{display:inline-flex;gap:6px;align-items:center}
+select,.field{font:600 15px var(--font);color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;box-sizing:border-box;max-width:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;margin:6px 0 16px}
+.grid label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.grid label.wide{grid-column:1/-1}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;max-height:420px;overflow-y:auto;background:#fff}
+table{border-collapse:collapse;font-size:13px;width:100%}
+th,td{padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid #E7EDF0}
+th{position:sticky;top:0;background:#F1F5F7;font-weight:800}
+td.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:800;font-size:12px}
+.pill.inc{background:var(--accent-soft);color:var(--accent)}
+.pill.exc{background:var(--warn-soft);color:var(--warn)}
+.stats{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){.bob,.dots::after{animation:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. Instructions -->
+  <section data-screen="intro" hidden>
+    <div class="card">
+      <h1>Online ball-tossing game</h1>
+      <p>In this part of the study you'll play a short ball-tossing game with two other participants who are online at the same time as you.</p>
+      <p>The game is a mental visualisation exercise. How well you play doesn't matter. What matters is that you picture the experience in your mind: who the other players are, where you are playing, and what it feels like to be there.</p>
+      <p>When the ball comes to you, click or tap one of the other players to throw it to them. The game ends by itself after a few minutes.</p>
+      <p class="note">Please stay on this page until the game has finished. Don't reload or close it, because the game can only be played once.</p>
+      <div class="row"><button class="btn" id="join-btn" type="button">Join the game</button></div>
+    </div>
+    <div class="pilot" id="pilot-bar" hidden>
+      <b>Researcher preview</b>
+      <label for="pilot-cond">Condition
+        <select id="pilot-cond">
+          <option value="inclusion">Inclusion</option>
+          <option value="exclusion">Exclusion</option>
+        </select>
+      </label>
+      <label for="pilot-fast"><input type="checkbox" id="pilot-fast"> Fast mode</label>
+      <button class="btn ghost" id="open-admin" type="button">Link generator</button>
+      <span>Preview runs aren't saved as completed, so you can replay.</span>
+    </div>
+  </section>
+
+  <!-- 2. Lobby -->
+  <section data-screen="lobby" hidden>
+    <div class="card">
+      <h1 id="lobby-title">Connecting to other players</h1>
+      <p class="muted" id="lobby-sub">This usually takes a few seconds.</p>
+      <ul class="slots" id="slots"></ul>
+    </div>
+  </section>
+
+  <!-- 3. Game -->
+  <section data-screen="game" hidden>
+    <div class="stage" id="stage">
+      <svg id="svg" viewBox="0 0 800 520" role="application" aria-label="Ball-tossing game"></svg>
+      <div class="over" id="over" hidden><span>The game has finished</span></div>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+  </section>
+
+  <!-- 4. End -->
+  <section data-screen="end" hidden>
+    <div class="card">
+      <h1 id="end-title">Thanks for playing</h1>
+      <div class="warnbox" id="end-warn" hidden></div>
+      <p id="end-text">The game has finished. Here is your completion code. You'll need it in the next part of the study.</p>
+      <div class="codebox">
+        <span class="code" id="code">------</span>
+        <button class="btn ghost" id="copy-code" type="button">Copy code</button>
+      </div>
+      <p class="muted small" id="end-id"></p>
+      <div class="row" id="next-row"></div>
+    </div>
+    <div class="pilot" id="pilot-end" hidden></div>
+  </section>
+
+  <!-- 5. Researcher: link generator -->
+  <section data-screen="admin" hidden>
+    <div class="card">
+      <h1>Participant link generator</h1>
+      <p>Each ID is tied to a condition, and IDs are handed out in shuffled blocks so the two conditions stay balanced as you recruit. Give each participant one link, in list order.</p>
+      <p class="warnbox">Keep <code>salt</code> in the settings unchanged once you've generated links. Changing it reassigns every ID's condition and code.</p>
+      <div class="grid">
+        <label for="adm-n">Participants<input class="field" id="adm-n" type="number" min="2" max="2000" step="2" value="180"></label>
+        <label for="adm-block">Block size<input class="field" id="adm-block" type="number" min="2" max="20" step="2" value="4"></label>
+        <label class="wide" for="adm-base">Game page address<input class="field" id="adm-base" type="url" placeholder="https://yourname.github.io/cyberball/"></label>
+      </div>
+      <div class="row">
+        <button class="btn" id="adm-gen" type="button">Generate list</button>
+        <button class="btn ghost" id="adm-copy" type="button" disabled>Copy as CSV</button>
+        <button class="btn ghost" id="adm-dl" type="button" disabled>Download CSV</button>
+        <span class="stats" id="adm-stats"></span>
+      </div>
+    </div>
+    <div class="tablewrap" id="adm-table" hidden></div>
+    <div class="card">
+      <h2>Check a completion code</h2>
+      <p class="muted small">Enter a participant ID and the code they typed into the questionnaire.</p>
+      <div class="grid">
+        <label for="chk-id">Participant ID<input class="field" id="chk-id" type="text" autocomplete="off"></label>
+        <label for="chk-code">Code entered<input class="field" id="chk-code" type="text" autocomplete="off"></label>
+      </div>
+      <div class="row"><button class="btn ghost" id="chk-btn" type="button">Check</button><span id="chk-out" class="stats"></span></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ============================ SETTINGS ============================ */
+const CONFIG = {
+  throws: 30,                 // total throws in the game (Cyberball default)
+  exclusionReceives: 2,       // times the participant gets the ball before being excluded
+  players: [
+    { key: 'A', name: 'Alex',   shirt: '#5B7FB0' },
+    { key: 'B', name: 'Jordan', shirt: '#C0705A' }
+  ],
+  youShirt: '#3E968A',
+  salt: 'nsp-cyberball-2026-k7q4', // keep fixed after generating participant links
+  sheetsUrl: '',              // Google Apps Script web app URL (leave '' to switch logging off)
+  nextUrl: '',                // Form 2 link; {id} and {code} are filled in automatically
+  lobbyMs: [7000, 12000],     // how long "connecting to other players" takes
+  holdMs: [800, 3000],        // how long the other players hold the ball before throwing
+  preview: /*PREVIEW*/false
+};
+/* ================================================================== */
+
+const $ = s => document.querySelector(s);
+const qs = new URLSearchParams(location.search);
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+};
+const rand = (a,b) => a + Math.random()*(b-a);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ALPH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function h32(s){
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+  return h >>> 0;
+}
+function codeFrom(seed){
+  const n = h32(seed), m = h32(seed + '#'); let out = '';
+  for (let i = 0; i < 6; i++){ const v = i < 3 ? n : m; out += ALPH[(v >>> ((i % 3) * 5)) & 31]; }
+  return out;
+}
+const conditionOf = id => (h32(id.toUpperCase() + '|cond|' + CONFIG.salt) & 1) ? 'exclusion' : 'inclusion';
+const codeOf = (id, interrupted) => codeFrom(id.toUpperCase() + '|code|' + CONFIG.salt + (interrupted ? '|x' : ''));
+function randomId(len = 5){
+  const a = new Uint32Array(len); crypto.getRandomValues(a);
+  return Array.from(a, v => ALPH[v % 32]).join('');
+}
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+
+/* ---------- session ---------- */
+const session = { id:null, cond:null, source:null, pilot:false, fast: qs.get('fast') === '1' };
+const idParam = (qs.get('id') || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,40);
+if (idParam){ session.id = idParam; session.cond = conditionOf(idParam); session.source = 'link'; }
+else { session.id = 'R' + randomId(5); session.cond = Math.random() < .5 ? 'inclusion' : 'exclusion'; session.source = 'random'; }
+session.pilot = CONFIG.preview || qs.get('pilot') === '1';
+const SPD = () => session.fast ? 0.15 : 1;
+const key = k => 'cyberball:' + session.id + ':' + k;
+const persist = () => !session.pilot;
+
+function show(name){
+  document.querySelectorAll('section[data-screen]').forEach(s => s.hidden = s.dataset.screen !== name);
+  window.scrollTo(0,0);
+}
+
+/* ---------- logging ---------- */
+const clock = { startedAt:null, t0:0, hiddenCount:0, hiddenMs:0, hiddenSince:null };
+document.addEventListener('visibilitychange', () => {
+  if (!state.running) return;
+  if (document.hidden){ clock.hiddenCount++; clock.hiddenSince = performance.now(); }
+  else if (clock.hiddenSince){ clock.hiddenMs += performance.now() - clock.hiddenSince; clock.hiddenSince = null; }
+});
+function send(event, extra = {}){
+  if (!CONFIG.sheetsUrl) return;
+  const payload = Object.assign({
+    event, id: session.id, condition: session.cond, id_source: session.source,
+    pilot: session.pilot, fast: session.fast,
+    user_agent: navigator.userAgent, viewport: innerWidth + 'x' + innerHeight,
+    touch: ('ontouchstart' in window) || navigator.maxTouchPoints > 0
+  }, extra);
+  try {
+    fetch(CONFIG.sheetsUrl, { method:'POST', mode:'no-cors', keepalive:true,
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(()=>{});
+  } catch(e){}
+}
+
+/* ---------- intro / pilot ---------- */
+if (session.pilot){
+  $('#pilot-bar').hidden = false;
+  $('#pilot-cond').value = session.cond;
+  $('#pilot-fast').checked = session.fast;
+  $('#pilot-cond').addEventListener('change', e => session.cond = e.target.value);
+  $('#pilot-fast').addEventListener('change', e => session.fast = e.target.checked);
+  $('#open-admin').addEventListener('click', () => show('admin'));
+}
+$('#join-btn').addEventListener('click', () => {
+  if (persist()) store.set(key('started'), new Date().toISOString());
+  send('start');
+  runLobby();
+});
+
+/* ---------- lobby ---------- */
+async function runLobby(){
+  show('lobby');
+  const ul = $('#slots'); ul.innerHTML = '';
+  const mk = (label, color, on) => {
+    const li = document.createElement('li'); li.className = 'slot' + (on ? ' on' : '');
+    li.innerHTML = '<span class="dot"></span><span class="who"></span><span class="state"></span>';
+    li.querySelector('.who').textContent = on ? label : 'Waiting for a player';
+    li.querySelector('.state').innerHTML = on ? 'Connected' : '<span class="dots">Searching</span>';
+    if (on) li.querySelector('.dot').style.background = color;
+    ul.appendChild(li); return li;
+  };
+  mk('You', CONFIG.youShirt, true);
+  const s1 = mk('', '', false), s2 = mk('', '', false);
+  const L = rand(...CONFIG.lobbyMs) * SPD();
+  const join = (li, p) => {
+    li.classList.add('on'); li.querySelector('.who').textContent = p.name;
+    li.querySelector('.state').textContent = 'Connected'; li.querySelector('.dot').style.background = p.shirt;
+  };
+  await sleep(L * rand(.25, .5)); join(s1, CONFIG.players[0]);
+  await sleep(L * rand(.3, .45)); join(s2, CONFIG.players[1]);
+  $('#lobby-title').textContent = 'All players connected';
+  $('#lobby-sub').innerHTML = '<span class="dots">Starting the game</span>';
+  await sleep(1800 * SPD());
+  startGame();
+}
+
+/* ---------- game drawing ---------- */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const SKIN = '#DDC4A8', HAIR = '#4A403B', TROUSERS = '#35424C';
+function el(tag, attrs = {}, parent){
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e); return e;
+}
+function shade(hex, f){
+  const n = parseInt(hex.slice(1), 16);
+  const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(v * f))));
+  return '#' + c.map(v => v.toString(16).padStart(2,'0')).join('');
+}
+const LAYOUT = { A:{x:180,y:262,s:1}, B:{x:620,y:262,s:1}, P:{x:400,y:470,s:1.18} };
+const POSE = { down: 12, ready: -195, hold: -170 };  // left-arm angle; right arm mirrors
+const players = {};
+let ball, ballShadow, svg;
+
+function buildScene(){
+  svg = $('#svg'); svg.innerHTML = '';
+  const defs = el('defs', {}, svg);
+  const rg = el('radialGradient', { id:'floor', cx:'50%', cy:'45%', r:'60%' }, defs);
+  el('stop', { offset:'0%', 'stop-color':'#F4F8F9' }, rg);
+  el('stop', { offset:'100%', 'stop-color':'#D7E1E6' }, rg);
+  const bg = el('radialGradient', { id:'ballg', cx:'35%', cy:'30%', r:'75%' }, defs);
+  el('stop', { offset:'0%', 'stop-color':'#FFE39A' }, bg);
+  el('stop', { offset:'60%', 'stop-color':'#EDB93B' }, bg);
+  el('stop', { offset:'100%', 'stop-color':'#C8901F' }, bg);
+
+  const floor = el('g', {}, svg);
+  el('ellipse', { cx:400, cy:372, rx:370, ry:150, fill:'url(#floor)' }, floor);
+  el('ellipse', { cx:400, cy:372, rx:250, ry:96, fill:'none', stroke:'#C9D5DB', 'stroke-width':2, 'stroke-dasharray':'2 10', 'stroke-linecap':'round' }, floor);
+  ballShadow = el('ellipse', { cx:0, cy:0, rx:15, ry:5, fill:'rgba(29,43,53,.18)' }, floor);
+
+  const layer = el('g', {}, svg);
+  CONFIG.players.forEach(p => players[p.key] = makePlayer(p.key, p.name, p.shirt, LAYOUT[p.key], layer, false));
+  players.P = makePlayer('P', 'You', CONFIG.youShirt, LAYOUT.P, layer, true);
+
+  ball = el('g', {}, svg);
+  el('circle', { r:13, fill:'url(#ballg)', stroke:'#B07E1A', 'stroke-width':1.2 }, ball);
+  el('path', { d:'M-12,-4 C-4,-1 4,-1 12,-4', fill:'none', stroke:'#B07E1A', 'stroke-width':1.3, opacity:.8 }, ball);
+  el('path', { d:'M-11,6 C-3,3 3,3 11,6', fill:'none', stroke:'#B07E1A', 'stroke-width':1.3, opacity:.8 }, ball);
+}
+
+function makePlayer(k, name, shirt, pos, layer, isYou){
+  const g = el('g', { class:'player', 'data-key':k }, layer);
+  const body = el('g', { transform:`translate(${pos.x} ${pos.y}) scale(${pos.s})` }, g);
+  el('ellipse', { class:'ring', cx:0, cy:2, rx:58, ry:15, fill:'rgba(47,127,115,.14)', stroke:'#2F7F73', 'stroke-width':3 }, body);
+  el('ellipse', { cx:0, cy:2, rx:42, ry:9, fill:'rgba(29,43,53,.16)' }, body);
+  const bob = el('g', { class:'bob', style:`animation-delay:-${(Math.random()*3).toFixed(2)}s` }, body);
+  el('rect', { x:-19, y:-54, width:15, height:54, rx:7, fill:TROUSERS }, bob);
+  el('rect', { x:4, y:-54, width:15, height:54, rx:7, fill:TROUSERS }, bob);
+  const arms = {};
+  for (const side of [-1, 1]){
+    const sh = el('g', { transform:`translate(${side*27} -112)` }, bob);
+    const arm = el('g', {}, sh);
+    el('rect', { x:-7.5, y:0, width:15, height:58, rx:7.5, fill:shade(shirt,.85) }, arm);
+    el('circle', { cx:0, cy:62, r:9, fill:SKIN }, arm);
+    arms[side] = { g:arm, a:0 };
+  }
+  el('rect', { x:-31, y:-122, width:62, height:78, rx:22, fill:shirt }, bob);
+  el('rect', { x:-31, y:-70, width:62, height:10, fill:shade(shirt,.88) }, bob);
+  el('circle', { cx:0, cy:-143, r:23, fill:SKIN }, bob);
+  el('path', { d:'M-23.5,-146 a23.5,23.5 0 0 1 47,0 q-9,-9 -23.5,-9 q-14.5,0 -23.5,9z', fill:HAIR }, bob);
+  const label = el('text', { x:pos.x, y:pos.y + 34, 'text-anchor':'middle',
+    'font-family':"Nunito, system-ui, sans-serif", 'font-weight':800, 'font-size':isYou ? 21 : 19,
+    fill:isYou ? '#2F7F73' : '#1D2B35' }, g);
+  label.textContent = name;
+  const hit = el('rect', { x:pos.x - 70*pos.s, y:pos.y - 200*pos.s, width:140*pos.s, height:215*pos.s, fill:'#000', 'fill-opacity':0 }, g);
+  const pl = { key:k, name, pos, g, arms, hit };
+  setPose(pl, 'down', 0);
+  if (!isYou){
+    g.setAttribute('role','button'); g.setAttribute('aria-label','Throw the ball to ' + name);
+    g.addEventListener('click', () => onPick(k));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onPick(k); } });
+  }
+  return pl;
+}
+
+function tween(dur, fn){
+  return new Promise(res => {
+    if (dur <= 0){ fn(1); return res(); }
+    const t0 = performance.now();
+    const f = now => { const k = Math.min(1, (now - t0) / dur); fn(k); k < 1 ? requestAnimationFrame(f) : res(); };
+    requestAnimationFrame(f);
+  });
+}
+function setPose(pl, pose, dur){
+  const target = POSE[pose];
+  const jobs = [-1, 1].map(side => {
+    const arm = pl.arms[side], from = arm.a, to = side === -1 ? target : -target;
+    return tween(dur, k => { const e = 1 - Math.pow(1 - k, 3); arm.a = from + (to - from) * e; arm.g.setAttribute('transform', `rotate(${arm.a})`); });
+  });
+  return Promise.all(jobs);
+}
+const holdPt = k => { const p = LAYOUT[k]; return { x:p.x, y:p.y - 178*p.s }; };
+const feetPt = k => { const p = LAYOUT[k]; return { x:p.x, y:p.y + 2 }; };
+function placeBall(k){
+  const h = holdPt(k), f = feetPt(k);
+  ball.setAttribute('transform', `translate(${h.x} ${h.y})`);
+  ballShadow.setAttribute('cx', f.x); ballShadow.setAttribute('cy', f.y);
+  ballShadow.setAttribute('rx', 12); ballShadow.setAttribute('ry', 4); ballShadow.setAttribute('opacity', .6);
+}
+
+/* ---------- game logic ---------- */
+const state = { running:false, holder:null, done:0, log:[], pReceived:0, pThrows:0, busy:false, pHoldStart:0, pHolds:[] };
+
+async function startGame(){
+  show('game');
+  buildScene();
+  Object.assign(state, { running:true, done:0, log:[], pReceived:0, pThrows:0, busy:false, pHolds:[] });
+  clock.startedAt = new Date(); clock.t0 = performance.now(); clock.hiddenCount = 0; clock.hiddenMs = 0;
+  state.holder = Math.random() < .5 ? 'A' : 'B';
+  setPose(players[state.holder], 'hold', 0);
+  placeBall(state.holder);
+  $('#status').textContent = '';
+  await sleep(1500 * SPD());
+  next();
+}
+
+function next(){
+  if (state.done >= CONFIG.throws) return endGame();
+  if (state.holder === 'P'){
+    state.pHoldStart = performance.now();
+    setTargets(true);
+    $('#status').textContent = 'Click a player to throw the ball to them.';
+  } else {
+    const from = state.holder;
+    setTimeout(() => throwBall(from, chooseTarget(from)), rand(...CONFIG.holdMs) * SPD());
+  }
+}
+
+function chooseTarget(from){
+  const other = from === 'A' ? 'B' : 'A';
+  if (session.cond === 'inclusion') return Math.random() < .5 ? 'P' : other;
+  if (state.pReceived < CONFIG.exclusionReceives){
+    if (state.done >= 2) return 'P';
+    return Math.random() < .6 ? 'P' : other;
+  }
+  return other;
+}
+
+function setTargets(on){
+  for (const k of ['A','B']){
+    const g = players[k].g;
+    g.classList.toggle('target', on);
+    if (on) g.setAttribute('tabindex','0'); else g.removeAttribute('tabindex');
+  }
+}
+
+function onPick(k){
+  if (!state.running || state.busy || state.holder !== 'P') return;
+  state.pHolds.push(Math.round(performance.now() - state.pHoldStart));
+  throwBall('P', k);
+}
+
+async function throwBall(from, to){
+  state.busy = true;
+  setTargets(false);
+  $('#status').textContent = '';
+  const p0 = holdPt(from), p1 = holdPt(to), f0 = feetPt(from), f1 = feetPt(to);
+  const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+  const dur = (620 + dist * 0.62) * SPD();
+  const peak = 70 + dist * 0.2;
+  const dir = p1.x >= p0.x ? 1 : -1;
+  setPose(players[from], 'down', 280 * SPD());
+  setPose(players[to], 'ready', 320 * SPD());
+  await tween(dur, k => {
+    const x = p0.x + (p1.x - p0.x) * k;
+    const y = p0.y + (p1.y - p0.y) * k - peak * 4 * k * (1 - k);
+    ball.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(k * 420 * dir).toFixed(1)})`);
+    const lift = Math.sin(Math.PI * k);
+    ballShadow.setAttribute('cx', (f0.x + (f1.x - f0.x) * k).toFixed(1));
+    ballShadow.setAttribute('cy', (f0.y + (f1.y - f0.y) * k).toFixed(1));
+    ballShadow.setAttribute('rx', (12 + 6 * lift).toFixed(1));
+    ballShadow.setAttribute('ry', (4 + 2 * lift).toFixed(1));
+    ballShadow.setAttribute('opacity', (.6 - .35 * lift).toFixed(2));
+  });
+  setPose(players[to], 'hold', 160 * SPD());
+  state.done++;
+  state.log.push({ n: state.done, from, to, t: Math.round(performance.now() - clock.t0) });
+  if (to === 'P') state.pReceived++;
+  if (from === 'P') state.pThrows++;
+  state.holder = to;
+  state.busy = false;
+  next();
+}
+
+async function endGame(){
+  state.running = false;
+  setTargets(false);
+  $('#status').textContent = '';
+  await sleep(900 * SPD());
+  $('#over').hidden = false;
+  await sleep(2400 * SPD());
+  $('#over').hidden = true;
+  finish('complete');
+}
+
+function finish(kind){
+  const code = codeOf(session.id, kind === 'interrupted');
+  if (persist()) store.set(key('done'), code);
+  const received = state.pReceived, total = state.log.length;
+  const holds = state.pHolds;
+  send(kind, {
+    code,
+    started_at: clock.startedAt ? clock.startedAt.toISOString() : '',
+    ended_at: new Date().toISOString(),
+    duration_s: clock.startedAt ? Math.round((Date.now() - clock.startedAt.getTime()) / 100) / 10 : '',
+    throws_total: total,
+    received_by_participant: received,
+    thrown_by_participant: state.pThrows,
+    participant_share: total ? Math.round(received / total * 1000) / 1000 : '',
+    mean_decision_ms: holds.length ? Math.round(holds.reduce((a,b) => a + b, 0) / holds.length) : '',
+    hidden_count: clock.hiddenCount,
+    hidden_ms: Math.round(clock.hiddenMs),
+    player_names: CONFIG.players.map(p => p.key + '=' + p.name).join(' '),
+    throw_log: state.log.map(e => `${e.n}:${e.from}>${e.to}@${e.t}`).join(' ')
+  });
+  showEnd(code, kind);
+}
+
+/* ---------- end screen ---------- */
+function showEnd(code, kind){
+  show('end');
+  $('#code').textContent = code;
+  $('#end-id').textContent = 'Participant ID: ' + session.id;
+  const warn = $('#end-warn');
+  if (kind === 'repeat'){
+    $('#end-title').textContent = 'You have already played';
+    $('#end-text').textContent = 'This game can only be played once. Here is your completion code again.';
+  } else if (kind === 'interrupted'){
+    $('#end-title').textContent = 'This game was interrupted';
+    warn.hidden = false;
+    warn.textContent = 'The page was reloaded or closed during the game, so it can’t be played again.';
+    $('#end-text').textContent = 'Please enter this code in the next part of the study.';
+  }
+  const row = $('#next-row'); row.innerHTML = '';
+  if (CONFIG.nextUrl){
+    const a = document.createElement('a');
+    a.className = 'btn';
+    a.href = CONFIG.nextUrl.replace(/\{id\}/g, encodeURIComponent(session.id)).replace(/\{code\}/g, encodeURIComponent(code));
+    a.textContent = 'Continue to the next part';
+    row.appendChild(a);
+  } else {
+    const p = document.createElement('p'); p.className = 'muted';
+    p.textContent = 'Go back to the questionnaire and enter this code to continue.';
+    row.appendChild(p);
+  }
+  if (session.pilot && kind === 'complete'){
+    const box = $('#pilot-end'); box.hidden = false;
+    box.innerHTML = '';
+    const b = document.createElement('b'); b.textContent = 'Researcher preview'; box.appendChild(b);
+    const s = document.createElement('span'); s.className = 'stats';
+    s.textContent = `${session.cond} · ${state.log.length} throws · participant received ${state.pReceived} (${Math.round(state.pReceived / Math.max(1,state.log.length) * 100)}%)`;
+    box.appendChild(s);
+    const again = document.createElement('button'); again.className = 'btn ghost'; again.type = 'button'; again.textContent = 'Play again';
+    again.addEventListener('click', () => { $('#end-title').textContent = 'Thanks for playing'; box.hidden = true; show('intro'); });
+    box.appendChild(again);
+  }
+}
+$('#copy-code').addEventListener('click', e => {
+  const btn = e.currentTarget, txt = $('#code').textContent;
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy code', 1800); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#code')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected, press Ctrl+C'; };
+  try { navigator.clipboard.writeText(txt).then(done, fallback); } catch(err){ fallback(); }
+});
+
+/* ---------- link generator ---------- */
+let admRows = [];
+$('#adm-base').value = location.protocol.startsWith('http') && !CONFIG.preview ? location.origin + location.pathname : '';
+function csv(){
+  const head = ['order','participant_id','condition','completion_code','interrupted_code','link'];
+  const esc = v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g,'""') + '"' : v;
+  return [head.join(',')].concat(admRows.map(r => [r.n, r.id, r.condition, r.code, r.xcode, r.link].map(esc).join(','))).join('\n');
+}
+$('#adm-gen').addEventListener('click', () => {
+  let n = Math.max(2, Math.min(2000, parseInt($('#adm-n').value, 10) || 180));
+  let block = Math.max(2, parseInt($('#adm-block').value, 10) || 4); if (block % 2) block++;
+  const base = ($('#adm-base').value.trim() || 'https://yourname.github.io/cyberball/');
+  const used = new Set(); admRows = []; let seq = [];
+  for (let i = 0; i < n; i++){
+    if (!seq.length) seq = shuffle(Array.from({ length:block }, (_, j) => j < block / 2 ? 'inclusion' : 'exclusion'));
+    const want = seq.pop(); let id;
+    do { id = randomId(5); } while (used.has(id) || conditionOf(id) !== want);
+    used.add(id);
+    admRows.push({ n:i+1, id, condition:want, code:codeOf(id), xcode:codeOf(id, true), link: base + (base.includes('?') ? '&' : '?') + 'id=' + id });
+  }
+  const inc = admRows.filter(r => r.condition === 'inclusion').length;
+  $('#adm-stats').textContent = `${n} links · ${inc} inclusion / ${n - inc} exclusion`;
+  const wrap = $('#adm-table'); wrap.hidden = false;
+  const t = document.createElement('table');
+  t.innerHTML = '<thead><tr><th>#</th><th>Participant ID</th><th>Condition</th><th>Completion code</th><th>Interrupted code</th><th>Link</th></tr></thead>';
+  const tb = document.createElement('tbody');
+  for (const r of admRows){
+    const tr = document.createElement('tr');
+    const cells = [[r.n,'m'],[r.id,'m'],[null,''],[r.code,'m'],[r.xcode,'m'],[r.link,'m']];
+    cells.forEach(([v,c], i) => {
+      const td = document.createElement('td'); if (c) td.className = c;
+      if (i === 2){ const s = document.createElement('span'); s.className = 'pill ' + (r.condition === 'inclusion' ? 'inc' : 'exc'); s.textContent = r.condition; td.appendChild(s); }
+      else td.textContent = v;
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb); wrap.innerHTML = ''; wrap.appendChild(t);
+  $('#adm-copy').disabled = false; $('#adm-dl').disabled = false;
+});
+$('#adm-copy').addEventListener('click', e => {
+  const btn = e.currentTarget;
+  try { navigator.clipboard.writeText(csv()).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy as CSV', 1800); }, () => btn.textContent = 'Copy blocked here, use Download'); }
+  catch(err){ btn.textContent = 'Copy blocked here, use Download'; }
+});
+$('#adm-dl').addEventListener('click', () => {
+  const url = URL.createObjectURL(new Blob([csv()], { type:'text/csv' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'cyberball_participant_links.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+});
+$('#chk-btn').addEventListener('click', () => {
+  const id = $('#chk-id').value.trim().toUpperCase(), c = $('#chk-code').value.trim().toUpperCase();
+  const out = $('#chk-out');
+  if (!id || !c){ out.textContent = 'Enter both an ID and a code.'; return; }
+  if (c === codeOf(id)) out.textContent = `Valid: completed the game (${conditionOf(id)}).`;
+  else if (c === codeOf(id, true)) out.textContent = `Interrupted: page was reloaded or closed mid-game (${conditionOf(id)}).`;
+  else out.textContent = 'No match: this code doesn’t belong to this ID.';
+});
+
+/* ---------- start-up ---------- */
+(function init(){
+  if (qs.get('admin') === '1') return show('admin');
+  if (session.source === 'link' && persist()){
+    const done = store.get(key('done'));
+    if (done) return showEnd(done, 'repeat');
+    if (store.get(key('started'))){ const c = codeOf(session.id, true); store.set(key('done'), c); send('interrupted', { code:c }); return showEnd(c, 'interrupted'); }
+  }
+  show('intro');
+})();
+</script>
+
+</body>
+</html>
