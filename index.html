@@ -38,7 +38,7 @@ p{margin:0 0 12px;max-width:64ch}
 .btn{appearance:none;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:800 16px/1 var(--font);
   padding:14px 26px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
 .btn:hover{filter:brightness(1.08)}
-.btn:focus-visible,.field:focus-visible,select:focus-visible{outline:3px solid var(--ball);outline-offset:3px}
+.btn:focus-visible,select:focus-visible{outline:3px solid var(--ball);outline-offset:3px}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);padding:10px 18px;font-size:14px}
 .btn[disabled]{opacity:.5;cursor:default}
 
@@ -69,28 +69,23 @@ p{margin:0 0 12px;max-width:64ch}
 .over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(248,250,251,.72);backdrop-filter:blur(2px)}
 .over span{font-weight:800;font-size:clamp(20px,3.4vw,26px);background:var(--panel);border:1px solid var(--line);padding:14px 28px;border-radius:999px}
 
-/* end */
-.codebox{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:6px 0 18px}
-.code{font-family:var(--mono);font-weight:500;font-size:clamp(26px,6vw,36px);letter-spacing:.14em;
-  background:#fff;border:1.5px dashed var(--accent);border-radius:12px;padding:10px 18px;user-select:all;-webkit-user-select:all}
-.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:12px 16px;font-weight:600;max-width:64ch;margin:0 0 16px}
+/* end: identical in both conditions except the swatch colour and word */
+.endcard{text-align:center;display:flex;flex-direction:column;align-items:center}
+.endcard p{margin-inline:auto}
+.swatch{width:min(100%,340px);box-sizing:border-box;border-radius:18px;padding:34px 20px;margin:4px 0 22px;
+  color:#fff;font-weight:800;font-size:clamp(34px,8vw,48px);letter-spacing:.12em;text-transform:uppercase;line-height:1.1;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.swatch.green{background:#2E9A4A}
+.swatch.blue{background:#2F68C8}
+.remember{font-weight:800;font-size:clamp(19px,3.4vw,23px);margin-bottom:14px}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:12px 16px;font-weight:700;max-width:64ch;margin:0 auto 16px}
+.goback{font-size:17px;margin-bottom:0}
 
 /* researcher tools */
 .pilot{border:1.5px dashed var(--line);border-radius:14px;padding:12px 16px;font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
 .pilot b{color:var(--ink);letter-spacing:.06em;text-transform:uppercase;font-size:12px}
 .pilot label{display:inline-flex;gap:6px;align-items:center}
-select,.field{font:600 15px var(--font);color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;box-sizing:border-box;max-width:100%}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;margin:6px 0 16px}
-.grid label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
-.grid label.wide{grid-column:1/-1}
-.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;max-height:420px;overflow-y:auto;background:#fff}
-table{border-collapse:collapse;font-size:13px;width:100%}
-th,td{padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid #E7EDF0}
-th{position:sticky;top:0;background:#F1F5F7;font-weight:800}
-td.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:800;font-size:12px}
-.pill.inc{background:var(--accent-soft);color:var(--accent)}
-.pill.exc{background:var(--warn-soft);color:var(--warn)}
+select{font:600 15px var(--font);color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;box-sizing:border-box;max-width:100%}
 .stats{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion: reduce){.bob,.dots::after{animation:none}}
 </style>
@@ -118,7 +113,6 @@ td.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
         </select>
       </label>
       <label for="pilot-fast"><input type="checkbox" id="pilot-fast"> Fast mode</label>
-      <button class="btn ghost" id="open-admin" type="button">Link generator</button>
       <span>Preview runs aren't saved as completed, so you can replay.</span>
     </div>
   </section>
@@ -143,48 +137,14 @@ td.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
   <!-- 4. End -->
   <section data-screen="end" hidden>
-    <div class="card">
-      <h1 id="end-title">Thanks for playing</h1>
-      <div class="warnbox" id="end-warn" hidden></div>
-      <p id="end-text">The game has finished. Here is your completion code. You'll need it in the next part of the study.</p>
-      <div class="codebox">
-        <span class="code" id="code">------</span>
-        <button class="btn ghost" id="copy-code" type="button">Copy code</button>
-      </div>
-      <p class="muted small" id="end-id"></p>
-      <div class="row" id="next-row"></div>
+    <div class="card endcard">
+      <p class="muted">Your colour code is</p>
+      <div class="swatch" id="swatch">&nbsp;</div>
+      <p class="remember">Please remember this colour.</p>
+      <p class="warnbox">Please do not close this game tab.</p>
+      <p class="goback">Now go back to the Google Form to continue.</p>
     </div>
     <div class="pilot" id="pilot-end" hidden></div>
-  </section>
-
-  <!-- 5. Researcher: link generator -->
-  <section data-screen="admin" hidden>
-    <div class="card">
-      <h1>Participant link generator</h1>
-      <p>Each ID is tied to a condition, and IDs are handed out in shuffled blocks so the two conditions stay balanced as you recruit. Give each participant one link, in list order.</p>
-      <p class="warnbox">Keep <code>salt</code> in the settings unchanged once you've generated links. Changing it reassigns every ID's condition and code.</p>
-      <div class="grid">
-        <label for="adm-n">Participants<input class="field" id="adm-n" type="number" min="2" max="2000" step="2" value="180"></label>
-        <label for="adm-block">Block size<input class="field" id="adm-block" type="number" min="2" max="20" step="2" value="4"></label>
-        <label class="wide" for="adm-base">Game page address<input class="field" id="adm-base" type="url" placeholder="https://yourname.github.io/cyberball/"></label>
-      </div>
-      <div class="row">
-        <button class="btn" id="adm-gen" type="button">Generate list</button>
-        <button class="btn ghost" id="adm-copy" type="button" disabled>Copy as CSV</button>
-        <button class="btn ghost" id="adm-dl" type="button" disabled>Download CSV</button>
-        <span class="stats" id="adm-stats"></span>
-      </div>
-    </div>
-    <div class="tablewrap" id="adm-table" hidden></div>
-    <div class="card">
-      <h2>Check a completion code</h2>
-      <p class="muted small">Enter a participant ID and the code they typed into the questionnaire.</p>
-      <div class="grid">
-        <label for="chk-id">Participant ID<input class="field" id="chk-id" type="text" autocomplete="off"></label>
-        <label for="chk-code">Code entered<input class="field" id="chk-code" type="text" autocomplete="off"></label>
-      </div>
-      <div class="row"><button class="btn ghost" id="chk-btn" type="button">Check</button><span id="chk-out" class="stats"></span></div>
-    </div>
   </section>
 </div>
 
@@ -198,9 +158,8 @@ const CONFIG = {
     { key: 'B', name: 'Jordan', shirt: '#C0705A' }
   ],
   youShirt: '#3E968A',
-  salt: 'nsp-cyberball-2026-k7q4', // keep fixed after generating participant links
+  colours: { inclusion: 'green', exclusion: 'blue' }, // end-page colour code per condition
   sheetsUrl: '',              // Google Apps Script web app URL (leave '' to switch logging off)
-  nextUrl: '',                // Form 2 link; {id} and {code} are filled in automatically
   lobbyMs: [7000, 12000],     // how long "connecting to other players" takes
   holdMs: [800, 3000],        // how long the other players hold the ball before throwing
   preview: /*PREVIEW*/false
@@ -217,30 +176,22 @@ const rand = (a,b) => a + Math.random()*(b-a);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ALPH = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-function h32(s){
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
-  return h >>> 0;
-}
-function codeFrom(seed){
-  const n = h32(seed), m = h32(seed + '#'); let out = '';
-  for (let i = 0; i < 6; i++){ const v = i < 3 ? n : m; out += ALPH[(v >>> ((i % 3) * 5)) & 31]; }
-  return out;
-}
-const conditionOf = id => (h32(id.toUpperCase() + '|cond|' + CONFIG.salt) & 1) ? 'exclusion' : 'inclusion';
-const codeOf = (id, interrupted) => codeFrom(id.toUpperCase() + '|code|' + CONFIG.salt + (interrupted ? '|x' : ''));
 function randomId(len = 5){
   const a = new Uint32Array(len); crypto.getRandomValues(a);
   return Array.from(a, v => ALPH[v % 32]).join('');
 }
-function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function coinFlip(){
+  const a = new Uint32Array(1); crypto.getRandomValues(a);
+  return (a[0] & 1) === 1;
+}
 
 /* ---------- session ---------- */
+// The condition is drawn at random, 50/50, every time the page is opened.
 const session = { id:null, cond:null, source:null, pilot:false, fast: qs.get('fast') === '1' };
 const idParam = (qs.get('id') || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,40);
-if (idParam){ session.id = idParam; session.cond = conditionOf(idParam); session.source = 'link'; }
-else { session.id = 'R' + randomId(5); session.cond = Math.random() < .5 ? 'inclusion' : 'exclusion'; session.source = 'random'; }
+session.id = idParam || 'R' + randomId(5);
+session.source = idParam ? 'link' : 'random';
+session.cond = coinFlip() ? 'exclusion' : 'inclusion';
 session.pilot = CONFIG.preview || qs.get('pilot') === '1';
 const SPD = () => session.fast ? 0.15 : 1;
 const key = k => 'cyberball:' + session.id + ':' + k;
@@ -279,10 +230,9 @@ if (session.pilot){
   $('#pilot-fast').checked = session.fast;
   $('#pilot-cond').addEventListener('change', e => session.cond = e.target.value);
   $('#pilot-fast').addEventListener('change', e => session.fast = e.target.checked);
-  $('#open-admin').addEventListener('click', () => show('admin'));
 }
 $('#join-btn').addEventListener('click', () => {
-  if (persist()) store.set(key('started'), new Date().toISOString());
+  if (persist()) store.set(key('started'), session.cond);
   send('start');
   runLobby();
 });
@@ -514,12 +464,12 @@ async function endGame(){
 }
 
 function finish(kind){
-  const code = codeOf(session.id, kind === 'interrupted');
-  if (persist()) store.set(key('done'), code);
+  const colour = CONFIG.colours[session.cond];
+  if (persist()) store.set(key('done'), session.cond);
   const received = state.pReceived, total = state.log.length;
   const holds = state.pHolds;
   send(kind, {
-    code,
+    colour,
     started_at: clock.startedAt ? clock.startedAt.toISOString() : '',
     ended_at: new Date().toISOString(),
     duration_s: clock.startedAt ? Math.round((Date.now() - clock.startedAt.getTime()) / 100) / 10 : '',
@@ -533,36 +483,17 @@ function finish(kind){
     player_names: CONFIG.players.map(p => p.key + '=' + p.name).join(' '),
     throw_log: state.log.map(e => `${e.n}:${e.from}>${e.to}@${e.t}`).join(' ')
   });
-  showEnd(code, kind);
+  showEnd(session.cond, kind);
 }
 
 /* ---------- end screen ---------- */
-function showEnd(code, kind){
+// Only the swatch colour and its word differ between conditions.
+function showEnd(cond, kind){
   show('end');
-  $('#code').textContent = code;
-  $('#end-id').textContent = 'Participant ID: ' + session.id;
-  const warn = $('#end-warn');
-  if (kind === 'repeat'){
-    $('#end-title').textContent = 'You have already played';
-    $('#end-text').textContent = 'This game can only be played once. Here is your completion code again.';
-  } else if (kind === 'interrupted'){
-    $('#end-title').textContent = 'This game was interrupted';
-    warn.hidden = false;
-    warn.textContent = 'The page was reloaded or closed during the game, so it can’t be played again.';
-    $('#end-text').textContent = 'Please enter this code in the next part of the study.';
-  }
-  const row = $('#next-row'); row.innerHTML = '';
-  if (CONFIG.nextUrl){
-    const a = document.createElement('a');
-    a.className = 'btn';
-    a.href = CONFIG.nextUrl.replace(/\{id\}/g, encodeURIComponent(session.id)).replace(/\{code\}/g, encodeURIComponent(code));
-    a.textContent = 'Continue to the next part';
-    row.appendChild(a);
-  } else {
-    const p = document.createElement('p'); p.className = 'muted';
-    p.textContent = 'Go back to the questionnaire and enter this code to continue.';
-    row.appendChild(p);
-  }
+  const colour = CONFIG.colours[cond] || CONFIG.colours.inclusion;
+  const sw = $('#swatch');
+  sw.className = 'swatch ' + colour;
+  sw.textContent = colour.toUpperCase();
   if (session.pilot && kind === 'complete'){
     const box = $('#pilot-end'); box.hidden = false;
     box.innerHTML = '';
@@ -571,83 +502,21 @@ function showEnd(code, kind){
     s.textContent = `${session.cond} · ${state.log.length} throws · participant received ${state.pReceived} (${Math.round(state.pReceived / Math.max(1,state.log.length) * 100)}%)`;
     box.appendChild(s);
     const again = document.createElement('button'); again.className = 'btn ghost'; again.type = 'button'; again.textContent = 'Play again';
-    again.addEventListener('click', () => { $('#end-title').textContent = 'Thanks for playing'; box.hidden = true; show('intro'); });
+    again.addEventListener('click', () => { box.hidden = true; show('intro'); });
     box.appendChild(again);
   }
 }
-$('#copy-code').addEventListener('click', e => {
-  const btn = e.currentTarget, txt = $('#code').textContent;
-  const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy code', 1800); };
-  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#code')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected, press Ctrl+C'; };
-  try { navigator.clipboard.writeText(txt).then(done, fallback); } catch(err){ fallback(); }
-});
-
-/* ---------- link generator ---------- */
-let admRows = [];
-$('#adm-base').value = location.protocol.startsWith('http') && !CONFIG.preview ? location.origin + location.pathname : '';
-function csv(){
-  const head = ['order','participant_id','condition','completion_code','interrupted_code','link'];
-  const esc = v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g,'""') + '"' : v;
-  return [head.join(',')].concat(admRows.map(r => [r.n, r.id, r.condition, r.code, r.xcode, r.link].map(esc).join(','))).join('\n');
-}
-$('#adm-gen').addEventListener('click', () => {
-  let n = Math.max(2, Math.min(2000, parseInt($('#adm-n').value, 10) || 180));
-  let block = Math.max(2, parseInt($('#adm-block').value, 10) || 4); if (block % 2) block++;
-  const base = ($('#adm-base').value.trim() || 'https://yourname.github.io/cyberball/');
-  const used = new Set(); admRows = []; let seq = [];
-  for (let i = 0; i < n; i++){
-    if (!seq.length) seq = shuffle(Array.from({ length:block }, (_, j) => j < block / 2 ? 'inclusion' : 'exclusion'));
-    const want = seq.pop(); let id;
-    do { id = randomId(5); } while (used.has(id) || conditionOf(id) !== want);
-    used.add(id);
-    admRows.push({ n:i+1, id, condition:want, code:codeOf(id), xcode:codeOf(id, true), link: base + (base.includes('?') ? '&' : '?') + 'id=' + id });
-  }
-  const inc = admRows.filter(r => r.condition === 'inclusion').length;
-  $('#adm-stats').textContent = `${n} links · ${inc} inclusion / ${n - inc} exclusion`;
-  const wrap = $('#adm-table'); wrap.hidden = false;
-  const t = document.createElement('table');
-  t.innerHTML = '<thead><tr><th>#</th><th>Participant ID</th><th>Condition</th><th>Completion code</th><th>Interrupted code</th><th>Link</th></tr></thead>';
-  const tb = document.createElement('tbody');
-  for (const r of admRows){
-    const tr = document.createElement('tr');
-    const cells = [[r.n,'m'],[r.id,'m'],[null,''],[r.code,'m'],[r.xcode,'m'],[r.link,'m']];
-    cells.forEach(([v,c], i) => {
-      const td = document.createElement('td'); if (c) td.className = c;
-      if (i === 2){ const s = document.createElement('span'); s.className = 'pill ' + (r.condition === 'inclusion' ? 'inc' : 'exc'); s.textContent = r.condition; td.appendChild(s); }
-      else td.textContent = v;
-      tr.appendChild(td);
-    });
-    tb.appendChild(tr);
-  }
-  t.appendChild(tb); wrap.innerHTML = ''; wrap.appendChild(t);
-  $('#adm-copy').disabled = false; $('#adm-dl').disabled = false;
-});
-$('#adm-copy').addEventListener('click', e => {
-  const btn = e.currentTarget;
-  try { navigator.clipboard.writeText(csv()).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy as CSV', 1800); }, () => btn.textContent = 'Copy blocked here, use Download'); }
-  catch(err){ btn.textContent = 'Copy blocked here, use Download'; }
-});
-$('#adm-dl').addEventListener('click', () => {
-  const url = URL.createObjectURL(new Blob([csv()], { type:'text/csv' }));
-  const a = document.createElement('a'); a.href = url; a.download = 'cyberball_participant_links.csv';
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
-});
-$('#chk-btn').addEventListener('click', () => {
-  const id = $('#chk-id').value.trim().toUpperCase(), c = $('#chk-code').value.trim().toUpperCase();
-  const out = $('#chk-out');
-  if (!id || !c){ out.textContent = 'Enter both an ID and a code.'; return; }
-  if (c === codeOf(id)) out.textContent = `Valid: completed the game (${conditionOf(id)}).`;
-  else if (c === codeOf(id, true)) out.textContent = `Interrupted: page was reloaded or closed mid-game (${conditionOf(id)}).`;
-  else out.textContent = 'No match: this code doesn’t belong to this ID.';
-});
 
 /* ---------- start-up ---------- */
+// Only personal links (?id=...) remember a finished or interrupted game;
+// they show the colour of the condition that was actually played.
 (function init(){
-  if (qs.get('admin') === '1') return show('admin');
   if (session.source === 'link' && persist()){
+    const isCond = v => Object.prototype.hasOwnProperty.call(CONFIG.colours, v || '');
     const done = store.get(key('done'));
-    if (done) return showEnd(done, 'repeat');
-    if (store.get(key('started'))){ const c = codeOf(session.id, true); store.set(key('done'), c); send('interrupted', { code:c }); return showEnd(c, 'interrupted'); }
+    if (isCond(done)) return showEnd(done, 'repeat');
+    const started = store.get(key('started'));
+    if (isCond(started)){ store.set(key('done'), started); session.cond = started; send('interrupted', { colour: CONFIG.colours[started] }); return showEnd(started, 'interrupted'); }
   }
   show('intro');
 })();
