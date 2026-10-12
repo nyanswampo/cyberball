@@ -184,9 +184,19 @@ function coinFlip(){
   const a = new Uint32Array(1); crypto.getRandomValues(a);
   return (a[0] & 1) === 1;
 }
+// The real draw, made when the participant clicks "Join the game". It mixes the browser's
+// secure random numbers with Math.random and the exact click time (in microseconds), so
+// nothing about how the page was loaded or cached can fix the outcome.
+function drawCondition(){
+  const a = new Uint32Array(2); crypto.getRandomValues(a);
+  let h = (a[0] ^ a[1] ^ Math.floor(Math.random() * 4294967296) ^ Math.floor(performance.now() * 1000) ^ Date.now()) >>> 0;
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+  return ((h >>> 0) & 1) ? 'exclusion' : 'inclusion';
+}
 
 /* ---------- session ---------- */
-// The condition is drawn at random, 50/50, every time the page is opened.
+// A provisional condition is set on load (shown in the pilot bar); participants get a
+// fresh 50/50 draw when they click "Join the game".
 const session = { id:null, cond:null, source:null, pilot:false, fast: qs.get('fast') === '1' };
 const idParam = (qs.get('id') || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,40);
 session.id = idParam || 'R' + randomId(5);
@@ -194,7 +204,9 @@ session.source = idParam ? 'link' : 'random';
 session.cond = coinFlip() ? 'exclusion' : 'inclusion';
 session.pilot = CONFIG.preview || qs.get('pilot') === '1';
 const SPD = () => session.fast ? 0.15 : 1;
-const key = k => 'cyberball:' + session.id + ':' + k;
+// Personal links (?id=...) are remembered per ID; the plain link is remembered per browser,
+// so reloading can't move a participant into the other condition.
+const key = k => 'cyberball:' + (session.source === 'link' ? session.id : 'plain') + ':' + k;
 const persist = () => !session.pilot;
 
 function show(name){
@@ -232,6 +244,7 @@ if (session.pilot){
   $('#pilot-fast').addEventListener('change', e => session.fast = e.target.checked);
 }
 $('#join-btn').addEventListener('click', () => {
+  if (!session.pilot) session.cond = drawCondition();
   if (persist()) store.set(key('started'), session.cond);
   send('start');
   runLobby();
@@ -511,7 +524,7 @@ function showEnd(cond, kind){
 // Only personal links (?id=...) remember a finished or interrupted game;
 // they show the colour of the condition that was actually played.
 (function init(){
-  if (session.source === 'link' && persist()){
+  if (persist()){
     const isCond = v => Object.prototype.hasOwnProperty.call(CONFIG.colours, v || '');
     const done = store.get(key('done'));
     if (isCond(done)) return showEnd(done, 'repeat');
